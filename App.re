@@ -3,10 +3,103 @@ open Revery.Math;
 open Revery.UI;
 open Revery.UI.Components;
 
+type rank =
+  | One
+  | Two
+  | Three;
+
+type suit =
+  | Diamond
+  | Ellipse
+  | Squiggle;
+
+type fill =
+  | Dashed
+  | None
+  | Solid;
+
+type color =
+  | Green
+  | Purple
+  | Red;
+
 type card = {
   selected: bool,
-  value: int,
+  rank,
+  suit,
+  fill,
+  color,
 };
+
+let newCard = ((rank, suit, fill, color)) => {
+  selected: false,
+  rank,
+  suit,
+  color,
+  fill,
+};
+
+let rec cartesianProduct = (l1, l2) =>
+  /* This is the naive, not tail-recursive implementation */
+  switch (l1, l2) {
+  | ([], _)
+  | (_, []) => []
+  | ([h1, ...t1], [h2, ...t2]) => [
+      (h1, h2),
+      ...List.append(cartesianProduct([h1], t2), cartesianProduct(t1, l2)),
+    ]
+  };
+
+let newDeck = {
+  let colors = [Green, Purple, Red];
+  let ranks = [One, Two, Three];
+  let suits = [Diamond, Ellipse, Squiggle];
+  let fills = [Dashed, None, Solid];
+
+  /* Return the cartesian product of all four lists */
+  cartesianProduct(ranks, suits)
+  |> cartesianProduct(fills)
+  |> cartesianProduct(colors)
+  |> List.map(((c, (f, (r, s)))) => (r, s, f, c))
+  |> List.map(ct => newCard(ct));
+};
+
+let string_of_card = card => {
+  /* placeholder */
+  let c =
+    switch (card.color) {
+    | Green => "green"
+    | Purple => "purple"
+    | Red => "red"
+    };
+  let r =
+    switch (card.rank) {
+    | One => "1"
+    | Two => "2"
+    | Three => "3"
+    };
+  let s =
+    switch (card.suit) {
+    | Diamond => "diamonds"
+    | Ellipse => "ellipses"
+    | Squiggle => "squiggles"
+    };
+  let f =
+    switch (card.fill) {
+    | Dashed => "dashed"
+    | None => "empty"
+    | Solid => "solid"
+    };
+
+  "The " ++ f ++ " " ++ c ++ " " ++ r ++ " of " ++ s ++ ".";
+};
+
+let type_of_card = card => /* Each card's type is unique*/ (
+  card.rank,
+  card.suit,
+  card.fill,
+  card.color,
+);
 
 let animatedText = {
   let component = React.component("AnimatedText");
@@ -79,35 +172,39 @@ let cardComponent = {
         width(100),
         height(150),
       ];
+    let textColor =
+      switch (card.color) {
+      | Green => Colors.green
+      | Purple => Colors.purple
+      | Red => Colors.red
+      };
     let textValueStyle =
       Style.[
-        color(Colors.green),
+        color(textColor),
         fontFamily("Roboto-Regular.ttf"),
         fontSize(15),
         margin(4),
       ];
     <Clickable onClick=toggle>
       <View style={card.selected ? wrapperStyleToggled : wrapperStyleBase}>
-        <Text style=textValueStyle text={string_of_int(card.value)} />
+        <Text style=textValueStyle text={string_of_card(card)} />
       </View>
     </Clickable>;
   };
 };
 
-let newCard = value => {selected: false, value};
-
 type state = {cards: list(card)};
 type action =
-  | ToggleCard(int)
+  | ToggleCard((rank, suit, fill, color))
   | Noop;
 
 let reducer = (action, state) =>
   switch (action) {
-  | ToggleCard(cardVal) => {
+  | ToggleCard((r, s, f, c)) => {
       cards:
         List.map(
           card =>
-            card.value == cardVal
+            type_of_card(card) == (r, s, f, c)
               ? {...card, selected: !card.selected} : card,
           state.cards,
         ),
@@ -151,7 +248,9 @@ module SetGameComponent = {
               card =>
                 <cardComponent
                   card
-                  onToggleCard={() => dispatch(ToggleCard(card.value))}
+                  onToggleCard={() =>
+                    dispatch(ToggleCard(type_of_card(card)))
+                  }
                 />,
               state.cards,
             )}
@@ -164,10 +263,7 @@ module SetGameComponent = {
 let init = app => {
   let win = App.createWindow(app, "SET");
 
-  let state = {
-    cards:
-      List.map(v => newCard(v), [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12]),
-  };
+  let state = {cards: newDeck};
   let element = <SetGameComponent state />;
 
   let _ = UI.start(win, element);
