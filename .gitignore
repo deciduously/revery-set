@@ -69,3 +69,5 @@ _esy/
 *.install
 .merlin
 
+# svg - only storing png for now
+/svg/

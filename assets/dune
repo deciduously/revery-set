@@ -1,4 +1,4 @@
 (install
     (section bin)
     (package App)
-    (files Roboto-Regular.ttf))
+    (files 1-g-d-n.png 1-g-d-s.png 1-g-e-n.png 1-g-e-s.png 1-p-d-n.png 1-p-d-s.png 1-r-d-n.png 1-r-d-s.png 1-r-e-s.png 2-g-e-s.png 2-r-d-s.png 2-p-d-s.png 3-g-d-n.png 3-g-e-s.png 3-p-d-s.png 3-r-d-s.png Roboto-Regular.ttf))

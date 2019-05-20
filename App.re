@@ -51,26 +51,26 @@ let rec cartesianProduct = (l1, l2) =>
   };
 
 let newDeck = {
+  /* A deck contains one of each combinations of these categories, 81 total */
   let colors = [Green, Purple, Red];
   let ranks = [One, Two, Three];
   let suits = [Diamond, Ellipse, Squiggle];
   let fills = [Dashed, None, Solid];
 
-  /* Return the cartesian product of all four lists */
-  cartesianProduct(ranks, suits)
-  |> cartesianProduct(fills)
-  |> cartesianProduct(colors)
-  |> List.map(((c, (f, (r, s)))) => (r, s, f, c))
-  |> List.map(ct => newCard(ct));
+  /* Return a card built from the cartesian product of all four lists */
+  cartesianProduct(fills, colors)
+  |> cartesianProduct(suits)
+  |> cartesianProduct(ranks)
+  |> List.map(((r, (s, (f, c)))) => newCard((r, s, f, c)));
 };
 
 let string_of_card = card => {
   /* placeholder */
   let c =
     switch (card.color) {
-    | Green => "green"
-    | Purple => "purple"
-    | Red => "red"
+    | Green => "g"
+    | Purple => "p"
+    | Red => "r"
     };
   let r =
     switch (card.rank) {
@@ -80,18 +80,18 @@ let string_of_card = card => {
     };
   let s =
     switch (card.suit) {
-    | Diamond => "diamonds"
-    | Ellipse => "ellipses"
-    | Squiggle => "squiggles"
+    | Diamond => "d"
+    | Ellipse => "e"
+    | Squiggle => "s"
     };
   let f =
     switch (card.fill) {
-    | Dashed => "dashed"
-    | None => "empty"
-    | Solid => "solid"
+    | Dashed => "d"
+    | None => "n"
+    | Solid => "s"
     };
 
-  "The " ++ f ++ " " ++ c ++ " " ++ r ++ " of " ++ s ++ ".";
+  r ++ "-" ++ c ++ "-" ++ s ++ "-" ++ f;
 };
 
 let type_of_card = card => /* Each card's type is unique*/ (
@@ -155,23 +155,14 @@ let cardComponent = {
   ) => {
     let toggle = onToggleCard;
 
-    let wrapperStyleBase =
+    let wrapperStyle =
       Style.[
-        backgroundColor(Color.rgba(1., 1., 1., 0.1)),
         border(~width=2, ~color=Colors.white),
         margin(16),
-        width(100),
-        height(150),
+        width(110),
+        height(155),
       ];
 
-    let wrapperStyleToggled =
-      Style.[
-        backgroundColor(Color.rgba(1., 1., 0.8, 0.5)),
-        border(~width=2, ~color=Colors.white),
-        margin(16),
-        width(100),
-        height(150),
-      ];
     let textColor =
       switch (card.color) {
       | Green => Colors.green
@@ -186,8 +177,14 @@ let cardComponent = {
         margin(4),
       ];
     <Clickable onClick=toggle>
-      <View style={card.selected ? wrapperStyleToggled : wrapperStyleBase}>
+      <View style=wrapperStyle>
         <Text style=textValueStyle text={string_of_card(card)} />
+        <Image
+          src={string_of_card(card) ++ ".png"}
+          opacity={card.selected ? 0.6 : 1.0}
+          width=106
+          height=150
+        />
       </View>
     </Clickable>;
   };
@@ -260,10 +257,15 @@ module SetGameComponent = {
     });
 };
 
+let initState = {
+  let deck = newDeck;
+  {cards: deck};
+};
+
 let init = app => {
   let win = App.createWindow(app, "SET");
 
-  let state = {cards: newDeck};
+  let state = initState;
   let element = <SetGameComponent state />;
 
   let _ = UI.start(win, element);
