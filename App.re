@@ -3,103 +3,108 @@ open Revery.Math;
 open Revery.UI;
 open Revery.UI.Components;
 
-type rank =
-  | One
-  | Two
-  | Three;
+module Deck = {
+  type rank =
+    | One
+    | Two
+    | Three;
 
-type suit =
-  | Diamond
-  | Ellipse
-  | Squiggle;
+  type suit =
+    | Diamond
+    | Ellipse
+    | Squiggle;
 
-type fill =
-  | Dashed
-  | None
-  | Solid;
+  type fill =
+    | Dashed
+    | None
+    | Solid;
 
-type color =
-  | Green
-  | Purple
-  | Red;
+  type color =
+    | Green
+    | Purple
+    | Red;
 
-type card = {
-  selected: bool,
-  rank,
-  suit,
-  fill,
-  color,
-};
-
-let newCard = ((rank, suit, fill, color)) => {
-  selected: false,
-  rank,
-  suit,
-  color,
-  fill,
-};
-
-let rec cartesianProduct = (l1, l2) =>
-  /* This is the naive, not tail-recursive implementation */
-  switch (l1, l2) {
-  | ([], _)
-  | (_, []) => []
-  | ([h1, ...t1], [h2, ...t2]) => [
-      (h1, h2),
-      ...List.append(cartesianProduct([h1], t2), cartesianProduct(t1, l2)),
-    ]
+  type card = {
+    selected: bool,
+    rank,
+    suit,
+    fill,
+    color,
   };
 
-let newDeck = {
-  /* A deck contains one of each combinations of these categories, 81 total */
-  let colors = [Green, Purple, Red];
-  let ranks = [One, Two, Three];
-  let suits = [Diamond, Ellipse, Squiggle];
-  let fills = [Dashed, None, Solid];
+  let newCard = ((rank, suit, fill, color)) => {
+    selected: false,
+    rank,
+    suit,
+    color,
+    fill,
+  };
 
-  /* Return a card built from the cartesian product of all four lists */
-  cartesianProduct(fills, colors)
-  |> cartesianProduct(suits)
-  |> cartesianProduct(ranks)
-  |> List.map(((r, (s, (f, c)))) => newCard((r, s, f, c)));
+  let rec cartesianProduct = (l1, l2) =>
+    /* This is the naive, not tail-recursive implementation */
+    switch (l1, l2) {
+    | ([], _)
+    | (_, []) => []
+    | ([h1, ...t1], [h2, ...t2]) => [
+        (h1, h2),
+        ...List.append(
+             cartesianProduct([h1], t2),
+             cartesianProduct(t1, l2),
+           ),
+      ]
+    };
+
+  let newDeck = {
+    /* A deck contains one of each combinations of these categories, 81 total */
+    let colors = [Green, Purple, Red];
+    let ranks = [One, Two, Three];
+    let suits = [Diamond, Ellipse, Squiggle];
+    let fills = [Dashed, None, Solid];
+
+    /* Return a card built from the cartesian product of all four lists */
+    cartesianProduct(fills, colors)
+    |> cartesianProduct(suits)
+    |> cartesianProduct(ranks)
+    |> List.map(((r, (s, (f, c)))) => newCard((r, s, f, c)));
+  };
+
+  let string_of_card = card => {
+    /* placeholder */
+    let c =
+      switch (card.color) {
+      | Green => "g"
+      | Purple => "p"
+      | Red => "r"
+      };
+    let r =
+      switch (card.rank) {
+      | One => "1"
+      | Two => "2"
+      | Three => "3"
+      };
+    let s =
+      switch (card.suit) {
+      | Diamond => "d"
+      | Ellipse => "e"
+      | Squiggle => "s"
+      };
+    let f =
+      switch (card.fill) {
+      | Dashed => "d"
+      | None => "n"
+      | Solid => "s"
+      };
+
+    r ++ "-" ++ c ++ "-" ++ s ++ "-" ++ f;
+  };
+
+  let type_of_card = card => /* Each card's type is unique*/ (
+    card.rank,
+    card.suit,
+    card.fill,
+    card.color,
+  );
 };
-
-let string_of_card = card => {
-  /* placeholder */
-  let c =
-    switch (card.color) {
-    | Green => "g"
-    | Purple => "p"
-    | Red => "r"
-    };
-  let r =
-    switch (card.rank) {
-    | One => "1"
-    | Two => "2"
-    | Three => "3"
-    };
-  let s =
-    switch (card.suit) {
-    | Diamond => "d"
-    | Ellipse => "e"
-    | Squiggle => "s"
-    };
-  let f =
-    switch (card.fill) {
-    | Dashed => "d"
-    | None => "n"
-    | Solid => "s"
-    };
-
-  r ++ "-" ++ c ++ "-" ++ s ++ "-" ++ f;
-};
-
-let type_of_card = card => /* Each card's type is unique*/ (
-  card.rank,
-  card.suit,
-  card.fill,
-  card.color,
-);
 
 let animatedText = {
   let component = React.component("AnimatedText");
@@ -149,7 +154,7 @@ let cardComponent = {
 
   (
     ~children as _: list(React.syntheticElement),
-    ~card: card,
+    ~card: Deck.card,
     ~onToggleCard,
     (),
   ) => {
@@ -178,9 +183,9 @@ let cardComponent = {
       ];
     <Clickable onClick=toggle>
       <View style=wrapperStyle>
-        <Text style=textValueStyle text={string_of_card(card)} />
+        <Text style=textValueStyle text={Deck.string_of_card(card)} />
         <Image
-          src={string_of_card(card) ++ ".png"}
+          src={Deck.string_of_card(card) ++ ".png"}
           opacity={card.selected ? 0.6 : 1.0}
           width=106
           height=150
@@ -190,9 +195,9 @@ let cardComponent = {
   };
 };
 
-type state = {cards: list(card)};
+type state = {cards: list(Deck.card)};
 type action =
-  | ToggleCard((rank, suit, fill, color))
+  | ToggleCard((Deck.rank, Deck.suit, Deck.fill, Deck.color))
   | Noop;
 
 let reducer = (action, state) =>
@@ -201,7 +206,7 @@ let reducer = (action, state) =>
       cards:
         List.map(
           card =>
-            type_of_card(card) == (r, s, f, c)
+            Deck.type_of_card(card) == (r, s, f, c)
               ? {...card, selected: !card.selected} : card,
           state.cards,
         ),
@@ -246,7 +251,7 @@ module SetGameComponent = {
                 <cardComponent
                   card
                   onToggleCard={() =>
-                    dispatch(ToggleCard(type_of_card(card)))
+                    dispatch(ToggleCard(Deck.type_of_card(card)))
                   }
                 />,
               state.cards,
@@ -258,7 +263,7 @@ module SetGameComponent = {
 };
 
 let initState = {
-  let deck = newDeck;
+  let deck = Deck.newDeck;
   {cards: deck};
 };
 

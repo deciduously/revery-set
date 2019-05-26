@@ -13,7 +13,7 @@ The card game Set implemented in Revery. Started from the [revery-quickstart](ht
 
 ```
 $ git clone https://github.com/deciduously/revery-set
-$ cd revery-quick-start
+$ cd revery-set
 $ esy install
 $ esy build
 $ esy run
